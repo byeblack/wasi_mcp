@@ -23,7 +23,10 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tokio::fs::create_dir("logs").await?;
+    if let Err(e) = tokio::fs::create_dir("logs").await {
+        tracing::warn!("failed to create logs dir: {:?}", e);
+    };
+
     let path = "target/wasm32-wasip2/release/server.wasm";
     let bytes = tokio::fs::read(&path).await?;
 

@@ -22,9 +22,7 @@ tracing-subscriber = { version = "0.3", features = [
     "fmt",
     "json",
 ] }
-rmcp = { git = "https://github.com/4t145/rmcp", branch = "master", features = [
-    "server",
-] }
+rmcp = { version = "0.1.5", features = ["server"] }
 wasi = { version = "0.14.2" }
 
 [dev-dependencies]
