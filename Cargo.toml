@@ -1,0 +1,11 @@
+[workspace]
+members = ["client", "server"]
+resolver = "2"
+
+[workspace.dependencies]
+server = { path = "./server" }
+client = { path = "./client" }
+
+[workspace.package]
+edition = "2024"
+publish = false
