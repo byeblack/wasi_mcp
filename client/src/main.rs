@@ -30,12 +30,13 @@ async fn main() -> Result<()> {
     let path = "target/wasm32-wasip2/release/server.wasm";
     let bytes = tokio::fs::read(&path).await?;
 
-    let (client_read, write_to_client) = tokio::io::simplex(64);
-    let (server_read, write_to_server) = tokio::io::simplex(64);
+    let (client_read, write_to_client) = tokio::io::simplex(1024);
+    let (server_read, write_to_server) = tokio::io::simplex(1024);
 
     let ct = tokio_util::sync::CancellationToken::new();
 
     let guard = ct.child_token();
+    let client_guard = guard.clone();
     tokio::spawn(async move {
         tokio::select! {
             _ = guard.cancelled() => {
@@ -43,6 +44,7 @@ async fn main() -> Result<()> {
             }
             err = wasi_server(&bytes,server_read, write_to_client) => {
                 tracing::error!("wasi_server: {:?}", err);
+                guard.cancel();
             }
 
         }
@@ -54,9 +56,21 @@ async fn main() -> Result<()> {
     // let write_to_server =
     //     monitored_stream::MonitoredStream::new((), write_to_server, "write_to_server");
 
-    let client =
-        rmcp::service::serve_client_with_ct((), (client_read, write_to_server), ct.child_token())
-            .await?;
+    let client_start_guard = client_guard.clone();
+    let client = tokio::select! {
+        _ = client_start_guard.cancelled() => {
+            return Err(anyhow::anyhow!("Container Error"));
+        }
+        result = rmcp::service::serve_client_with_ct((), (client_read, write_to_server), client_guard) => {
+            match result {
+                Ok(client) => client,
+                Err(e) => {
+                    client_start_guard.cancel();
+                    return Err(e.into());
+                }
+            }
+        }
+    };
 
     client.list_all_resources().await?;
     let tools = client.list_all_tools().await?;

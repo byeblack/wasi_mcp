@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1.0.97"
+anyhow = "1.0"
 bytes = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.44", features = [

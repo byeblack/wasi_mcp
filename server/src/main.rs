@@ -8,6 +8,8 @@ mod wasi_io;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
+    wasi_io::init_wasi_runtime()?;
+
     let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "mcp-server.log");
 
     tracing_subscriber::fmt()
